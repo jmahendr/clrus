@@ -2,6 +2,7 @@
 import json
 import logging
 import os
+import datetime
 
 # External Library
 import boto3
@@ -17,12 +18,19 @@ def lambda_handler(event, context):
     email = event['email']
 
     attributes = attributes_string.split(',')
+    filter = f"email=\'{email}\'"
 
     client = boto3.client("cognito-idp")
     response = client.list_users(
         UserPoolId=user_pool_id,
         AttributesToGet=attributes,
         Limit=1,
-        Filter=f'email={email}'
+        Filter=filter
     )
-    return response
+    return json.dumps(response['Users'], default=datetime_handler)
+
+
+def datetime_handler(x):
+    if isinstance(x, datetime.datetime):
+        return x.isoformat()
+    raise TypeError("Unknown type")
